@@ -8,12 +8,93 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String    @unique
   password  String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  avatar    String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  customer  Customer?
+  barber    Barber?
+  admin     Admin?
 
   @@map("users")
+}
+
+model Service {
+  id          String       @id @default(uuid())
+  name        String
+  price       Float
+  duration    Int
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  schedulings Scheduling[]
+
+  @@map("services")
+}
+
+model Customer {
+  customerId  String       @id
+  user        User         @relation(fields: [customerId], references: [id])
+  phone       String
+  birthDate   DateTime     @map("birth_date")
+  schedulings Scheduling[]
+
+  @@map("customers")
+}
+
+model Barber {
+  barberId        String            @id
+  user            User              @relation(fields: [barberId], references: [id])
+  expertise       String
+  bio             String
+  BarberBlockTime BarberBlockTime[]
+  schedulings     Scheduling[]
+
+  @@map("barbers")
+}
+
+model Admin {
+  adminId  String  @id
+  user     User    @relation(fields: [adminId], references: [id])
+  isActive Boolean @default(true) @map("is_active")
+
+  @@map("admins")
+}
+
+model BarberBlockTime {
+  id        String   @id @default(uuid())
+  barberId  String   @map("barber_id")
+  startTime DateTime @map("start_time")
+  endTime   DateTime @map("end_time")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  barber    Barber   @relation(fields: [barberId], references: [barberId])
+
+  @@map("barber_block_times")
+}
+
+model Scheduling {
+  id                 String     @id @default(uuid())
+  customerId         String     @map("customer_id")
+  barberId           String     @map("barber_id")
+  serviceId          String     @map("service_id")
+  startDate          DateTime   @map("start_date")
+  endDate            DateTime   @map("end_date")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+  isLateCancellation Boolean?   @default(false) @map("is_late_cancellation")
+  status             StatusType
+
+  customer Customer @relation(fields: [customerId], references: [customerId])
+  barber   Barber   @relation(fields: [barberId], references: [barberId])
+  service  Service  @relation(fields: [serviceId], references: [id])
+}
+
+enum StatusType {
+  AGENDADO
+  CANCELADO
+  FINALIZADO
+  DESISTENCIA
 }
